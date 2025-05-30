@@ -1,6 +1,7 @@
 package com.linker.core.network
 
 import Breed
+import com.linker.core.network.model.ImageDto
 import retrofit2.Response
 
 interface LinkerNetworkDataSource {
@@ -9,5 +10,7 @@ interface LinkerNetworkDataSource {
         page: Int,
         limit: Int
     ): Response<List<Breed>>
+
+    suspend fun getImage(imageId: String): Response<ImageDto>
 
 }

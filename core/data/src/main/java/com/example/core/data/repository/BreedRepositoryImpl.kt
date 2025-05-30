@@ -1,7 +1,6 @@
 package com.example.core.data.repository
 
 import Breed
-import android.annotation.SuppressLint
 import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.Pager
@@ -38,9 +37,12 @@ class BreedRepositoryImpl @Inject constructor(
                     name = entity.breed.name,
                     description = entity.breed.description.toString(),
                     origin = entity.breed.origin.toString(),
-                    lifeSpan = entity.breed.lifeSpan.toString(),
-                    referenceImageId = entity.breed.referenceImageId.toString(),
-                    isFavorite = entity.isFavorite
+                    life_span = entity.breed.lifeSpan.toString(),
+                    reference_image_id = entity.breed.referenceImageId.toString(),
+                    isFavorite = entity.isFavorite,
+                    imageUrl = entity.imageUrl,
+                    imageWidth = entity.imageWidth,
+                    imageHeight = entity.imageHeight
                 )
             }
         }

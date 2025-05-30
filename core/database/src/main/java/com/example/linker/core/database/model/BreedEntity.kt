@@ -1,7 +1,5 @@
 package com.example.linker.core.database.model
 
-import Image
-import Weight
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

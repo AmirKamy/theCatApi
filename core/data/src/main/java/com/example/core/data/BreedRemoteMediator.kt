@@ -5,17 +5,22 @@ import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
 import androidx.paging.RemoteMediator
-import com.example.linker.core.database.dao.BreedWithFavorite
 import com.example.linker.core.database.dao.BreedsDao
 import com.example.linker.core.database.model.BreedEntity
+import com.example.linker.core.database.model.BreedWithFavorite
+import com.example.linker.core.database.model.ImageEntity
 import com.linker.core.network.LinkerNetworkDataSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalPagingApi::class)
 class BreedRemoteMediator(
     private val apiService: LinkerNetworkDataSource,
     private val breedDao: BreedsDao
 ) : RemoteMediator<Int, BreedWithFavorite>() {
-    private var nextPage: Int? = 0 // ذخیره شماره صفحه بعدی
+    private var nextPage: Int? = 0
 
     override suspend fun load(
         loadType: LoadType,
@@ -49,11 +54,48 @@ class BreedRemoteMediator(
                     name = it.name,
                     description = it.description,
                     origin = it.origin,
-                    lifeSpan = it.lifeSpan,
-                    referenceImageId = it.referenceImageId
+                    lifeSpan = it.life_span,
+                    referenceImageId = it.reference_image_id
                 )
             } ?: emptyList()
             Log.i("BreedRemoteMediator", "Mapped breeds: ${breeds.size}")
+
+            // دریافت تصاویر به‌صورت موازی برای breedهایی که referenceImageId دارن
+            withContext(Dispatchers.IO) {
+                Log.i("BreedRemoteMediator", "before async")
+                Log.i("BreedRemoteMediator", "referenceImageIds: ${breeds.toString()}")
+                breeds.filter { it.referenceImageId != null }
+                    .map { breed ->
+
+                        async {
+                            val imageId = breed.referenceImageId!!
+                            val existingImage = breedDao.getImageById(imageId)
+                            Log.i("BreedRemoteMediator", "Existing image: $existingImage")
+                            if (existingImage == null) {
+                                try {
+                                    Log.i("BreedRemoteMediator", "Fetching image for referenceImageId: $imageId")
+                                    val imageResponse = apiService.getImage(imageId)
+                                    Log.i("BreedRemoteMediator", "Fetched image for referenceImageId: ${imageResponse.body()?.url}")
+                                    imageResponse.body()?.let { image ->
+                                        breedDao.insertImage(
+                                            ImageEntity(
+                                                id = imageId,
+                                                breedId = breed.id,
+                                                url = image.url,
+                                                width = image.width,
+                                                height = image.height
+                                            )
+                                        )
+                                        Log.i("BreedRemoteMediator", "Inserted image for breedId: ${breed.id}")
+                                    }
+                                } catch (e: Exception) {
+                                    Log.e("BreedRemoteMediator", "Error fetching image $imageId: ${e.message}", e)
+                                }
+                            }
+                        }
+                    }
+                    .awaitAll()
+            }
 
             if (loadType == LoadType.REFRESH) {
                 Log.i("BreedRemoteMediator", "Clearing database")
@@ -62,17 +104,22 @@ class BreedRemoteMediator(
             breedDao.insertAll(breeds)
             Log.i("BreedRemoteMediator", "Inserted ${breeds.size} breeds into database")
 
-            // افزایش شماره صفحه بعدی فقط اگر داده‌ای دریافت شده باشد
             if (breeds.isNotEmpty()) {
                 nextPage = page + 1
+            } else {
+                nextPage = null
             }
 
-            // پایان صفحه‌بندی وقتی تعداد آیتم‌ها کمتر از limit باشد یا پاسخ خالی باشد
-            val endOfPaginationReached = breeds.isEmpty() || breeds.size < 10
+            val endOfPaginationReached = breeds.isEmpty()
             Log.i("BreedRemoteMediator", "End of pagination reached: $endOfPaginationReached")
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
         } catch (e: Exception) {
             Log.e("BreedRemoteMediator", "Error fetching page $page: ${e.message}", e)
+            val breedCount = breedDao.getBreedCount()
+            Log.i("BreedRemoteMediator", "Offline mode, breeds in database: $breedCount")
+            if (breedCount > 0) {
+                return MediatorResult.Success(endOfPaginationReached = false)
+            }
             MediatorResult.Error(e)
         }
     }

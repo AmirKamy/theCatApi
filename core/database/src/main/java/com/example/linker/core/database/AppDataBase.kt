@@ -7,8 +7,9 @@ import androidx.room.RoomDatabase
 import com.example.linker.core.database.dao.BreedsDao
 import com.example.linker.core.database.model.BreedEntity
 import com.example.linker.core.database.model.FavoriteEntity
+import com.example.linker.core.database.model.ImageEntity
 
-@Database(entities = [BreedEntity::class, FavoriteEntity::class], version = 1)
+@Database(entities = [BreedEntity::class, FavoriteEntity::class, ImageEntity::class], version = 1)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun breedsDao(): BreedsDao
 
