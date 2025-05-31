@@ -28,7 +28,7 @@ interface BreedsDao {
     )
     fun getBreeds(): PagingSource<Int, BreedWithFavorite>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(breeds: List<BreedEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

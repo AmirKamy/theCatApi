@@ -2,6 +2,8 @@ package com.example.core.data.di
 
 import com.example.core.data.repository.BreedRepository
 import com.example.core.data.repository.BreedRepositoryImpl
+import com.example.core.data.repository.BreedsDetailRepository
+import com.example.core.data.repository.BreedsDetailRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -16,5 +18,8 @@ abstract class DataModule {
         breedsRepository: BreedRepositoryImpl,
     ): BreedRepository
 
-
+    @Binds
+    internal abstract fun bindsBreedDetailRepository(
+        breedDetailRepository: BreedsDetailRepositoryImpl,
+    ): BreedsDetailRepository
 }

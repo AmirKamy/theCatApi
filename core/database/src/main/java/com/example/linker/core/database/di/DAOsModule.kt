@@ -2,6 +2,7 @@ package com.example.linker.core.database.di
 
 
 import com.example.linker.core.database.AppDatabase
+import com.example.linker.core.database.dao.BreedDetailImageDao
 import com.example.linker.core.database.dao.BreedsDao
 import dagger.Module
 import dagger.Provides
@@ -15,4 +16,10 @@ internal object DAOsModule {
     fun providesBreedsDao(
         database: AppDatabase,
     ): BreedsDao = database.breedsDao()
+
+    @Provides
+    fun providesBreedsDetailImageDao(
+        database: AppDatabase,
+    ): BreedDetailImageDao = database.breedsDetailImageDao()
+
 }

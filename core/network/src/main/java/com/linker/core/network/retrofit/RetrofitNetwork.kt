@@ -23,6 +23,15 @@ interface RetrofitNetworkApi {
         @Path("imageId") imageId: String
     ): Response<ImageDto>
 
+    @GET("v1/images/search")
+    suspend fun getBreedDetailImages(
+        @Query("page") page: Int,
+        @Query("limit") limit: Int,
+        @Query("breed_ids") breedId: String,
+        @Query("order") order: String = "ASC",
+        @Query("include_breeds") includeBreeds: Int = 0
+    ): Response<List<ImageDto>>
+
 }
 
 
@@ -35,6 +44,13 @@ class RetrofitNetwork @Inject constructor(
 
     override suspend fun getImage(imageId: String): Response<ImageDto> =
         api.getImage(imageId)
+
+    override suspend fun getBreedDetailImages(
+        page: Int,
+        limit: Int,
+        breedId: String
+    ): Response<List<ImageDto>> =
+        api.getBreedDetailImages(page, limit, breedId)
 
 
 }

@@ -1,100 +1,169 @@
 package com.example.linker.feature.home
 
+import android.util.Log
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
+import com.example.linker.core.designsystem.component.DynamicAsyncImage
+import com.example.linker.core.designsystem.component.LinkerTopAppBar
+import com.example.linker.core.model.Image
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BreedDetailScreen(
     navController: NavController,
-    viewModel: HomeViewModel,
+    viewModel: BreedDetailViewModel,
     breedId: String
 ) {
-//    val product = viewModel.selectedProduct.value
-//    if (product != null)
-//        ShowContent(product, viewModel, navController)
+    LaunchedEffect(Unit) {
+        viewModel.loadImages(breedId)
+    }
+    val lazyPagingItems = viewModel.detailImages.collectAsLazyPagingItems()
+    Log.i("BreedDetailScreen", "Item count for breedId $breedId: ${lazyPagingItems.itemCount}")
 
-}
+    Scaffold(
+        topBar = {
+            LinkerTopAppBar(
+                titleRes = R.string.products,
+                navigationIcon = null,
+                navigationIconContentDescription = "Back",
+                action = {
+                    Row(
+                        modifier = Modifier.padding(end = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(top = 5.dp),
+                            text = "hi",
+                            style = MaterialTheme.typography.labelLarge
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Icon(
+                            painter = painterResource(id = R.drawable.cart),
+                            contentDescription = "Cart",
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                },
+                onNavigationClick = { navController.popBackStack() }
+            )
+        }
+    ) { paddingValues ->
+        val listState = rememberLazyListState()
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.padding(paddingValues),
+            contentPadding = PaddingValues(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            if (lazyPagingItems.loadState.refresh is LoadState.Loading) {
+                item {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+            } else if (lazyPagingItems.loadState.refresh is LoadState.Error) {
+                item {
+                    Text(
+                        text = "Failed to load images: ${(lazyPagingItems.loadState.refresh as LoadState.Error).error.message}",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+            } else if (lazyPagingItems.itemCount == 0) {
+                item {
+                    Text(
+                        text = "No images available",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+            }
 
-//@OptIn(ExperimentalMaterial3Api::class)
-//@Composable
-//fun ShowContent(product: Product, viewModel: HomeViewModel, navController: NavController) {
-//
-//    val productId = product.id
-//    val cartItems = viewModel.cartItems
-//    val isInCart = product.id in cartItems
-//
-//    Scaffold(
-//        topBar = {
-//            LinkerTopAppBar(
-//                R.string.products_detail,
-//                navigationIcon = LinkerIcons.ArrowBack,
-//                navigationIconContentDescription = "Back",
-//                action = {
-//                    IconButton(onClick = {
-//                        if (isInCart) {
-//                            cartItems.remove(productId)
-//                        } else {
-//                            cartItems.add(productId)
-//                        }
-//                    }) {
-//                        Icon(
-//                            imageVector = if (isInCart) Icons.Default.Delete else Icons.Default.Add,
-//                            contentDescription = "add to cart",
-//                            tint = MaterialTheme.colorScheme.onSurface,
-//                        )
-//                    }
-//                },
-//                onNavigationClick = { navController.popBackStack() },
-//            )
-//        }
-//    ) { paddingValues ->
-//        Box(modifier = Modifier.padding(paddingValues)) {
-//            Card(
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .padding(16.dp)
-//                    .border(
-//                        width = 1.dp,
-//                        color = Color.LightGray,
-//                        shape = RoundedCornerShape(16.dp),
-//                    ),
-//                elevation = CardDefaults.cardElevation(
-//                    defaultElevation = 6.dp
-//                ),
-//                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-//                shape = RoundedCornerShape(16.dp),
-//                content = {
-//                    Column {
-//                        DynamicAsyncImage(
-//                            imageUrl = product.image,
-//                            contentDescription = "Product Image",
-//                            modifier = Modifier
-//                                .fillMaxWidth()
-//                                .height(200.dp)
-//                                .padding(top = 16.dp, start = 16.dp, end = 16.dp)
-//                                .align(Alignment.CenterHorizontally),
-//                            contentScale = ContentScale.Fit
-//                        )
-//                        Spacer(modifier = Modifier.height(16.dp))
-//                        Text(
-//                            text = product.title,
-//                            style = MaterialTheme.typography.titleMedium,
-//                            modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth()
-//                        )
-//                        Spacer(modifier = Modifier.height(8.dp))
-//                        Text(
-//                            text = product.description.trim(),
-//                            style = MaterialTheme.typography.bodyMedium,
-//                            modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp).fillMaxWidth()
-//                        )
-//                    }
-//
+//            items(
+//                count = lazyPagingItems.itemCount,
+//                key = { index -> lazyPagingItems[index]?.id ?: "item-$index" } // کلید باید پایدار باشه
+//            ) { index ->
+//                lazyPagingItems[index]?.let { image ->
+//                    DynamicAsyncImage(
+//                        imageUrl = image.url,
+//                        contentDescription = "Detail Image",
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(200.dp)
+//                            .clip(RoundedCornerShape(8.dp)),
+//                        contentScale = ContentScale.Crop
+//                    )
 //                }
-//            )
-//        }
+//            }
+
+//            items(
+//                lazyPagingItems.itemCount,
+//                key = lazyPagingItems.itemKey { it.id }
+//            ) { index ->
+//                val imageUrl = lazyPagingItems[index]?.url
+//                imageUrl?.let {
+//                    DynamicAsyncImage(
+//                        imageUrl = it,
+//                        contentDescription = "Detail Image",
+//                        modifier = Modifier
+//                            .fillMaxWidth()
+//                            .height(200.dp)
+//                            .clip(RoundedCornerShape(8.dp)),
+//                        contentScale = ContentScale.Crop
+//                    )
+//                }
 //
-//    }
-//}
-//
+//            }
+
+
+
+            if (lazyPagingItems.loadState.append is LoadState.Loading) {
+                item {
+                    CircularProgressIndicator(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    )
+                }
+            }
+        }
+    }
+}

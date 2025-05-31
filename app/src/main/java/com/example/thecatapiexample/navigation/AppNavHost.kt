@@ -11,6 +11,7 @@ import androidx.navigation.navArgument
 import com.example.linker.feature.home.HomeScreen
 import com.example.linker.feature.home.HomeViewModel
 import com.example.linker.feature.home.BreedDetailScreen
+import com.example.linker.feature.home.BreedDetailViewModel
 import com.example.linker.feature.home.navigation.HomeDestination
 
 @Composable
@@ -20,8 +21,7 @@ fun AppNavHost(navController: NavHostController) {
         startDestination = HomeDestination.HomeScreen.route
     ) {
         composable(HomeDestination.HomeScreen.route) {
-            val viewModel: HomeViewModel = hiltViewModel()
-            HomeScreen(viewModel = viewModel, navController = navController) { breedId ->
+            HomeScreen(navController = navController) { breedId ->
                 navController.navigate(HomeDestination.DetailScreen.withArgs(breedId))
             }
         }
@@ -31,12 +31,7 @@ fun AppNavHost(navController: NavHostController) {
             arguments = listOf(navArgument("breed_id") {type = NavType.StringType})
         ) { backStackEntry ->
             val breedId = backStackEntry.arguments?.getString("breed_id") ?: return@composable
-
-            val parentEntry = remember(backStackEntry) {
-                navController.getBackStackEntry(HomeDestination.HomeScreen.route)
-            }
-            val viewModel: HomeViewModel = hiltViewModel(parentEntry)
-
+            val viewModel: BreedDetailViewModel = hiltViewModel()
             BreedDetailScreen(
                 viewModel = viewModel,
                 navController = navController,

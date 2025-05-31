@@ -13,4 +13,11 @@ interface LinkerNetworkDataSource {
 
     suspend fun getImage(imageId: String): Response<ImageDto>
 
+    suspend fun getBreedDetailImages(
+        page: Int,
+        limit: Int,
+        breedId: String
+    ): Response<List<ImageDto>>
+
+
 }

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
@@ -27,6 +28,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +42,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemContentType
+import androidx.paging.compose.itemKey
 import com.example.linker.core.designsystem.component.DynamicAsyncImage
 import com.example.linker.core.designsystem.component.LinkerTopAppBar
 
@@ -50,7 +55,10 @@ fun HomeScreen(
     navController: NavController,
     onBreedClick: (String) -> Unit
 ) {
-    val lazyPagingItems = viewModel.breeds.collectAsLazyPagingItems()
+//    val lazyPagingItems = viewModel.breeds.collectAsLazyPagingItems()
+    val lazyPagingItems = remember { viewModel.breeds }.collectAsLazyPagingItems()
+    val listState = rememberLazyListState()
+
     Log.i("HomeScreen", "Item count: ${lazyPagingItems.itemCount}")
 
     Scaffold(
@@ -82,6 +90,7 @@ fun HomeScreen(
         }
     ) { paddingValues ->
         LazyColumn(
+            state = listState,
             modifier = Modifier.padding(paddingValues),
             contentPadding = PaddingValues(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -118,11 +127,28 @@ fun HomeScreen(
                 }
             }
 
+//            items(
+//                count = lazyPagingItems.itemCount,
+//                key = { index ->
+//                    lazyPagingItems.itemSnapshotList.items.getOrNull(index)?.id ?: index
+//                }
+//            ) { index ->
+//                lazyPagingItems[index]?.let { breed ->
+//                    Log.i("HomeScreen", "Rendering breed: ${breed.name}")
+//                    BreedRow(
+//                        breed = breed,
+//                        onFavoriteToggle = { viewModel.toggleFavorite(breed.id, !breed.isFavorite) },
+//                        onBreedClick = {
+//                            onBreedClick(breed.id)
+//                        }
+//                    )
+//                }
+//            }
+
             items(
                 count = lazyPagingItems.itemCount,
-                key = { index ->
-                    lazyPagingItems.itemSnapshotList.items.getOrNull(index)?.id ?: index
-                }
+                key = lazyPagingItems.itemKey { it.id },
+                contentType = lazyPagingItems.itemContentType { "MyPagingItems" },
             ) { index ->
                 lazyPagingItems[index]?.let { breed ->
                     Log.i("HomeScreen", "Rendering breed: ${breed.name}")
@@ -170,22 +196,22 @@ fun BreedRow(breed: Breed, onFavoriteToggle: () -> Unit, onBreedClick: () -> Uni
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(80.dp) // ارتفاع ثابت برای جلوگیری از رندر سریع
+            .height(200.dp) // ارتفاع ثابت برای جلوگیری از رندر سریع
             .padding(8.dp)
             .clickable { onBreedClick() },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        DynamicAsyncImage(
-            imageUrl = breed.imageUrl.toString(),
-            contentDescription = "Product Image",
-            modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(Color.White),
-            contentScale = ContentScale.Crop
-        )
+//        DynamicAsyncImage(
+//            imageUrl = breed.imageUrl.toString(),
+//            contentDescription = "Product Image",
+//            modifier = Modifier
+//                .size(50.dp)
+//                .clip(CircleShape)
+//                .background(Color.White),
+//            contentScale = ContentScale.Crop
+//        )
 
         Column {
             Text(text = breed.name, style = MaterialTheme.typography.headlineMedium)

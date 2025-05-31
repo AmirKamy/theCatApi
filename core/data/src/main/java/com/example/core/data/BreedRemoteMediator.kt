@@ -13,6 +13,7 @@ import com.linker.core.network.LinkerNetworkDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalPagingApi::class)
@@ -45,9 +46,13 @@ class BreedRemoteMediator(
 
         return try {
             Log.i("BreedRemoteMediator", "Fetching page: $page with limit: 10")
+            delay(5000)
             val response = apiService.getBreeds(limit = 10, page = page)
-            Log.i("BreedRemoteMediator", "Response code: ${response.code()}, Body size: ${response.body()?.size ?: 0}")
 
+          //  Log.i("BreedRemoteMediator", "Response code: ${response.code()}, Body size: ${response.body()?.size ?: 0}")
+            for (breed in response.body() ?: emptyList()) {
+                Log.i("data1", "Fetched breed: ${breed.id}")
+            }
             val breeds = response.body()?.map {
                 BreedEntity(
                     id = it.id,
@@ -97,6 +102,8 @@ class BreedRemoteMediator(
                     .awaitAll()
             }
 
+            val endOfPaginationReached = breeds.isEmpty() || breeds.size < 10
+
             if (loadType == LoadType.REFRESH) {
                 Log.i("BreedRemoteMediator", "Clearing database")
                 breedDao.clearAll()
@@ -104,13 +111,11 @@ class BreedRemoteMediator(
             breedDao.insertAll(breeds)
             Log.i("BreedRemoteMediator", "Inserted ${breeds.size} breeds into database")
 
-            if (breeds.isNotEmpty()) {
-                nextPage = page + 1
-            } else {
+            if (endOfPaginationReached) {
                 nextPage = null
+            } else {
+                nextPage = page + 1
             }
-
-            val endOfPaginationReached = breeds.isEmpty()
             Log.i("BreedRemoteMediator", "End of pagination reached: $endOfPaginationReached")
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
         } catch (e: Exception) {
