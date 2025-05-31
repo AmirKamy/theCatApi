@@ -46,7 +46,7 @@ class BreedRemoteMediator(
 
         return try {
             Log.i("BreedRemoteMediator", "Fetching page: $page with limit: 10")
-            delay(5000)
+ //           delay(5000)
             val response = apiService.getBreeds(limit = 10, page = page)
 
           //  Log.i("BreedRemoteMediator", "Response code: ${response.code()}, Body size: ${response.body()?.size ?: 0}")

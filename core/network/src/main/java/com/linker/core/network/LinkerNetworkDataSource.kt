@@ -1,6 +1,7 @@
 package com.linker.core.network
 
 import Breed
+import com.linker.core.network.model.BreedDto
 import com.linker.core.network.model.ImageDto
 import retrofit2.Response
 
@@ -19,5 +20,6 @@ interface LinkerNetworkDataSource {
         breedId: String
     ): Response<List<ImageDto>>
 
+    suspend fun getBreedDetail(breedId: String): BreedDto
 
 }

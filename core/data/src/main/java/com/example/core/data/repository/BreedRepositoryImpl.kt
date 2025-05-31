@@ -10,6 +10,7 @@ import androidx.paging.map
 import com.example.core.data.BreedRemoteMediator
 import com.example.linker.core.database.dao.BreedsDao
 import com.example.linker.core.database.model.FavoriteEntity
+import com.example.linker.core.model.Resource
 import com.linker.core.network.LinkerNetworkDataSource
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -56,4 +57,6 @@ class BreedRepositoryImpl @Inject constructor(
             breedDao.removeFavorite(FavoriteEntity(breedId))
         }
     }
+
+
 }

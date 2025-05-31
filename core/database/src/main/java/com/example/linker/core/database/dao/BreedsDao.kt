@@ -10,6 +10,7 @@ import com.example.linker.core.database.model.BreedEntity
 import com.example.linker.core.database.model.BreedWithFavorite
 import com.example.linker.core.database.model.FavoriteEntity
 import com.example.linker.core.database.model.ImageEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface BreedsDao {
@@ -27,6 +28,9 @@ interface BreedsDao {
     """
     )
     fun getBreeds(): PagingSource<Int, BreedWithFavorite>
+
+    @Query("SELECT * FROM breeds WHERE id = :breedId")
+    fun getBreed(breedId: String): BreedEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertAll(breeds: List<BreedEntity>)
@@ -48,4 +52,7 @@ interface BreedsDao {
 
     @Query("SELECT * FROM images WHERE id = :imageId")
     suspend fun getImageById(imageId: String): ImageEntity?
+
+
+
 }

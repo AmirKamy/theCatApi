@@ -44,6 +44,7 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemContentType
 import androidx.paging.compose.itemKey
+import com.example.linker.core.designsystem.component.BreedRow
 import com.example.linker.core.designsystem.component.DynamicAsyncImage
 import com.example.linker.core.designsystem.component.LinkerTopAppBar
 
@@ -147,8 +148,7 @@ fun HomeScreen(
 
             items(
                 count = lazyPagingItems.itemCount,
-                key = lazyPagingItems.itemKey { it.id },
-                contentType = lazyPagingItems.itemContentType { "MyPagingItems" },
+                key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
             ) { index ->
                 lazyPagingItems[index]?.let { breed ->
                     Log.i("HomeScreen", "Rendering breed: ${breed.name}")
@@ -156,6 +156,7 @@ fun HomeScreen(
                         breed = breed,
                         onFavoriteToggle = { viewModel.toggleFavorite(breed.id, !breed.isFavorite) },
                         onBreedClick = {
+                            viewModel.setSelectedBreed(breed)
                             onBreedClick(breed.id)
                         }
                     )
@@ -191,37 +192,3 @@ fun HomeScreen(
     }
 }
 
-@Composable
-fun BreedRow(breed: Breed, onFavoriteToggle: () -> Unit, onBreedClick: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(200.dp) // ارتفاع ثابت برای جلوگیری از رندر سریع
-            .padding(8.dp)
-            .clickable { onBreedClick() },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-
-//        DynamicAsyncImage(
-//            imageUrl = breed.imageUrl.toString(),
-//            contentDescription = "Product Image",
-//            modifier = Modifier
-//                .size(50.dp)
-//                .clip(CircleShape)
-//                .background(Color.White),
-//            contentScale = ContentScale.Crop
-//        )
-
-        Column {
-            Text(text = breed.name, style = MaterialTheme.typography.headlineMedium)
-            // Text(text = breed.description ?: "No description available", maxLines = 1)
-        }
-        Icon(
-            modifier = Modifier.clickable { onFavoriteToggle() },
-            imageVector = if (breed.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-            contentDescription = "Favorite",
-            tint = if (breed.isFavorite) Color.Red else Color.Gray
-        )
-    }
-}

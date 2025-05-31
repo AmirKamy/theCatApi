@@ -32,9 +32,16 @@ fun AppNavHost(navController: NavHostController) {
         ) { backStackEntry ->
             val breedId = backStackEntry.arguments?.getString("breed_id") ?: return@composable
             val viewModel: BreedDetailViewModel = hiltViewModel()
+
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(HomeDestination.HomeScreen.route)
+            }
+            val breedViewModel: HomeViewModel = hiltViewModel(parentEntry)
+
             BreedDetailScreen(
                 viewModel = viewModel,
                 navController = navController,
+                breedViewModel = breedViewModel,
                 breedId = breedId
             )
         }

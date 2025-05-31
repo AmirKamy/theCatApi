@@ -28,6 +28,8 @@ class HomeViewModel @Inject constructor(
     val breeds: Flow<PagingData<Breed>> = getBreedsUseCase.invoke()
         .cachedIn(viewModelScope)
 
+    val breedForDetail = mutableStateOf<Breed?>(null)
+
 
     fun toggleFavorite(breedId: String, isFavorite: Boolean) {
         viewModelScope.launch {
@@ -35,6 +37,9 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    fun setSelectedBreed(breed: Breed) {
+        breedForDetail.value = breed
+    }
 
 
 }

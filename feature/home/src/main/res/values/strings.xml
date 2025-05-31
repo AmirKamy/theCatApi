@@ -4,4 +4,5 @@
     <string name="value_show">نمایش عددی</string>
     <string name="products">Products</string>
     <string name="products_detail">Product Detail</string>
+    <string name="breed_detail">Breed Detail</string>
 </resources>

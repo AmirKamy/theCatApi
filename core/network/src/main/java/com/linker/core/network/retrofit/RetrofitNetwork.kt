@@ -1,7 +1,9 @@
 package com.linker.core.network.retrofit
 
 import Breed
+import com.example.linker.core.model.Resource
 import com.linker.core.network.LinkerNetworkDataSource
+import com.linker.core.network.model.BreedDto
 import com.linker.core.network.model.ImageDto
 import retrofit2.Response
 import retrofit2.http.GET
@@ -32,6 +34,11 @@ interface RetrofitNetworkApi {
         @Query("include_breeds") includeBreeds: Int = 0
     ): Response<List<ImageDto>>
 
+    @GET("v1/breeds/{breedId}")
+    fun getBreedDetail(
+        @Path("breedId") breedId: String
+    ): BreedDto
+
 }
 
 
@@ -51,6 +58,9 @@ class RetrofitNetwork @Inject constructor(
         breedId: String
     ): Response<List<ImageDto>> =
         api.getBreedDetailImages(page, limit, breedId)
+
+    override suspend fun getBreedDetail(breedId: String): BreedDto =
+        api.getBreedDetail(breedId)
 
 
 }
