@@ -2,6 +2,7 @@ package com.example.linker.core.designsystem.component
 
 import Breed
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -11,9 +12,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -27,35 +31,61 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun BreedRow(breed: Breed, onFavoriteToggle: () -> Unit, onBreedClick: () -> Unit) {
-    Row(
+
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(150.dp) // ارتفاع ثابت برای جلوگیری از رندر سریع
             .padding(8.dp)
             .clickable { onBreedClick() },
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = 6.dp
+        ),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        shape = RoundedCornerShape(14.dp)
     ) {
-
-        DynamicAsyncImage(
-            imageUrl = breed.imageUrl.toString(),
-            contentDescription = "Product Image",
+        Row(
             modifier = Modifier
-                .size(50.dp)
-                .clip(CircleShape)
-                .background(Color.White),
-            contentScale = ContentScale.Crop
-        )
+                .fillMaxWidth()
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
 
-        Column {
-            Text(text = breed.name, style = MaterialTheme.typography.headlineMedium)
-            // Text(text = breed.description ?: "No description available", maxLines = 1)
+            DynamicAsyncImage(
+                imageUrl = breed.imageUrl.toString(),
+                contentDescription = "Product Image",
+                modifier = Modifier
+                    .size(70.dp)
+                    .clip(CircleShape)
+                    .background(Color.White),
+                contentScale = ContentScale.Crop
+            )
+
+            Column(
+                modifier = Modifier.weight(1f)
+                    .padding(start = 5.dp)
+            ) {
+                Text(text = breed.name, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    modifier = Modifier.padding(start = 1.dp, top = 4.dp),
+                    text = "Origin: " + (breed.origin ?: "not available"),
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Text(
+                    modifier = Modifier.padding(start = 1.dp, top = 4.dp),
+                    text = "Life span: " + (breed.life_span ?: "No life span available"),
+                    maxLines = 1,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+            Icon(
+                modifier = Modifier.clickable { onFavoriteToggle() }
+                    .padding(end = 8.dp),
+                imageVector = if (breed.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                contentDescription = "Favorite",
+                tint = if (breed.isFavorite) Color.Red else MaterialTheme.colorScheme.onSurface
+            )
         }
-        Icon(
-            modifier = Modifier.clickable { onFavoriteToggle() },
-            imageVector = if (breed.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
-            contentDescription = "Favorite",
-            tint = if (breed.isFavorite) Color.Red else Color.Gray
-        )
     }
 }

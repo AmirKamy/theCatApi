@@ -10,7 +10,7 @@ interface LinkerNetworkDataSource {
     suspend fun getBreeds(
         page: Int,
         limit: Int
-    ): Response<List<Breed>>
+    ): Response<List<BreedDto>>
 
     suspend fun getImage(imageId: String): Response<ImageDto>
 
@@ -22,6 +22,6 @@ interface LinkerNetworkDataSource {
 
     suspend fun getBreedDetail(breedId: String): BreedDto
 
-    suspend fun searchBread(query: String): Response<List<Breed>>
+    suspend fun searchBread(query: String): Response<List<BreedDto>>
 
 }

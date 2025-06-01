@@ -9,6 +9,7 @@ data class BreedEntity(
     @PrimaryKey val id: String,
     val name: String,
     val description: String?,
+    val temperament: String?,
     val origin: String?,
     val lifeSpan: String?,
     val referenceImageId: String?

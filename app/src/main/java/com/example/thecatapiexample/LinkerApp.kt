@@ -24,7 +24,7 @@ fun LinkerApp() {
     val navController = rememberNavController()
 
     Scaffold(
-        bottomBar = { BottomNavigationBar(navController) }
+    //    bottomBar = { BottomNavigationBar(navController) }
     ) { paddingValues ->
         Box(modifier = Modifier.padding(paddingValues)) {
             AppNavHost(navController = navController)

@@ -71,29 +71,31 @@ fun HomeScreen(
 
     Log.i("HomeScreen", "Item count: ${lazyPagingItems.itemCount}")
 
+
+
     Scaffold(
         topBar = {
             LinkerTopAppBar(
-                titleRes = R.string.products,
+                titleRes = R.string.breeds,
                 navigationIcon = null,
                 navigationIconContentDescription = "Back",
                 action = {
-                    Row(
-                        modifier = Modifier.padding(end = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(top = 5.dp),
-                            text = "hi",
-                            style = MaterialTheme.typography.labelLarge
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(
-                            painter = painterResource(id = R.drawable.cart),
-                            contentDescription = "Cart",
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
+//                    Row(
+//                        modifier = Modifier.padding(end = 12.dp),
+//                        verticalAlignment = Alignment.CenterVertically
+//                    ) {
+//                        Text(
+//                            modifier = Modifier.padding(top = 5.dp),
+//                            text = "hi",
+//                            style = MaterialTheme.typography.labelLarge
+//                        )
+//                        Spacer(modifier = Modifier.width(4.dp))
+//                        Icon(
+//                            painter = painterResource(id = R.drawable.cart),
+//                            contentDescription = "Cart",
+//                            modifier = Modifier.size(24.dp)
+//                        )
+//                    }
                 },
                 onNavigationClick = { navController.popBackStack() }
             )
@@ -114,7 +116,6 @@ fun HomeScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-            // نمایش ارور سرچ
             searchError?.let { error ->
                 Text(
                     text = error,
@@ -126,9 +127,10 @@ fun HomeScreen(
                 )
             }
 
+
             LazyColumn(
                 contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 if (searchQuery.isNotBlank()) {
 

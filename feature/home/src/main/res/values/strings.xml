@@ -5,4 +5,5 @@
     <string name="products">Products</string>
     <string name="products_detail">Product Detail</string>
     <string name="breed_detail">Breed Detail</string>
+    <string name="breeds">Breeds</string>
 </resources>

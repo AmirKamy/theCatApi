@@ -59,6 +59,7 @@ class BreedRemoteMediator(
                     name = it.name,
                     description = it.description,
                     origin = it.origin,
+                    temperament = it.temperament,
                     lifeSpan = it.life_span,
                     referenceImageId = it.reference_image_id
                 )

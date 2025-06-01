@@ -23,6 +23,7 @@ fun BreedWithFavorite.asExternalModel() = Breed(
     breed.origin,
     breed.lifeSpan,
     breed.referenceImageId,
+    breed.temperament,
     isFavorite,
     imageUrl,
     imageWidth,

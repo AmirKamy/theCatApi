@@ -18,7 +18,7 @@ interface RetrofitNetworkApi {
     suspend fun getItems(
         @Query("page") page: Int,
         @Query("limit") limit: Int,
-    ): Response<List<Breed>>
+    ): Response<List<BreedDto>>
 
     @GET("v1/images/{imageId}")
     suspend fun getImage(
@@ -42,7 +42,7 @@ interface RetrofitNetworkApi {
     @GET("v1/breeds/search")
     suspend fun searchBread(
         @Query("q") query: String
-    ): Response<List<Breed>>
+    ): Response<List<BreedDto>>
 
 }
 
@@ -51,7 +51,7 @@ interface RetrofitNetworkApi {
 class RetrofitNetwork @Inject constructor(
     private val api: RetrofitNetworkApi
 ) : LinkerNetworkDataSource {
-    override suspend fun getBreeds(page: Int, limit: Int): Response<List<Breed>> =
+    override suspend fun getBreeds(page: Int, limit: Int): Response<List<BreedDto>> =
         api.getItems(page, limit)
 
     override suspend fun getImage(imageId: String): Response<ImageDto> =
@@ -67,7 +67,7 @@ class RetrofitNetwork @Inject constructor(
     override suspend fun getBreedDetail(breedId: String): BreedDto =
         api.getBreedDetail(breedId)
 
-    override suspend fun searchBread(query: String): Response<List<Breed>> =
+    override suspend fun searchBread(query: String): Response<List<BreedDto>> =
         api.searchBread(query)
 
 

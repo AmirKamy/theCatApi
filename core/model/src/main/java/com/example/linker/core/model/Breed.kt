@@ -5,6 +5,7 @@ data class Breed(
     val origin: String?,
     val life_span: String?,
     val reference_image_id: String?,
+    val temperament: String?,
     val isFavorite: Boolean,
     val imageUrl: String? = null,
     val imageWidth: Int? = null,

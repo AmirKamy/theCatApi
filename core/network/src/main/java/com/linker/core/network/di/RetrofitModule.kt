@@ -1,5 +1,6 @@
 package com.linker.core.network.di
 
+import com.linker.core.network.BuildConfig
 import com.linker.core.network.retrofit.RetrofitNetwork
 import com.linker.core.network.retrofit.RetrofitNetworkApi
 import dagger.Module
@@ -31,7 +32,7 @@ object RetrofitModule {
                 val request = chain.request().newBuilder()
                     .addHeader(
                         "x-api-key",
-                        "live_P2cSPGKwSkBsfv442AuoaHnZt3ug9qT1V4WszdFucztf8gDGdIgUCXCI4EvbIGJc"
+                        BuildConfig.API_KEY
                     )
                     .build()
                 chain.proceed(request)

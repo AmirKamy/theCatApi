@@ -81,6 +81,7 @@ class BreedRepositoryImpl @Inject constructor(
                         description = breedResponse.description,
                         origin = breedResponse.origin,
                         lifeSpan = breedResponse.life_span,
+                        temperament = breedResponse.temperament,
                         referenceImageId = breedResponse.reference_image_id
                     )
                 } ?: emptyList()
