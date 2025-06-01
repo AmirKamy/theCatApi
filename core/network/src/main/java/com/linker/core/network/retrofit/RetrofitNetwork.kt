@@ -39,6 +39,11 @@ interface RetrofitNetworkApi {
         @Path("breedId") breedId: String
     ): BreedDto
 
+    @GET("v1/breeds/search")
+    suspend fun searchBread(
+        @Query("q") query: String
+    ): Response<List<Breed>>
+
 }
 
 
@@ -61,6 +66,9 @@ class RetrofitNetwork @Inject constructor(
 
     override suspend fun getBreedDetail(breedId: String): BreedDto =
         api.getBreedDetail(breedId)
+
+    override suspend fun searchBread(query: String): Response<List<Breed>> =
+        api.searchBread(query)
 
 
 }

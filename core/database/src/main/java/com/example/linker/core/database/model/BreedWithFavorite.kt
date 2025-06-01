@@ -1,5 +1,6 @@
 package com.example.linker.core.database.model
 
+import Breed
 import androidx.room.Embedded
 import androidx.room.Ignore
 
@@ -13,3 +14,17 @@ data class BreedWithFavorite(
     @Ignore
     val id: String = breed.id
 }
+
+
+fun BreedWithFavorite.asExternalModel() = Breed(
+    breed.id,
+    breed.name,
+    breed.description,
+    breed.origin,
+    breed.lifeSpan,
+    breed.referenceImageId,
+    isFavorite,
+    imageUrl,
+    imageWidth,
+    imageHeight
+)

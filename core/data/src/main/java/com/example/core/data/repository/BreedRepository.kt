@@ -11,7 +11,7 @@ interface BreedRepository {
 
     suspend fun toggleFavorite(breedId: String, isFavorite: Boolean)
 
-
+    suspend fun getBreedSearchResults(query: String): Flow<List<Breed>>
 
 }
 

@@ -1,17 +1,9 @@
-package com.example.linker.feature.home
+package com.example.catapiexample.feature.search
 
 import Breed
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
 import com.linker.core.domain.GetBreedsSearchUseCase
-import com.linker.core.domain.GetBreedsUseCase
-import com.linker.core.domain.GetFavoriteBreedsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -19,24 +11,17 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @HiltViewModel
-class HomeViewModel @Inject constructor(
-    private val getBreedsUseCase: GetBreedsUseCase,
-    private val getFavoriteBreedsUseCase: GetFavoriteBreedsUseCase,
+class SearchViewModel(
     private val searchBreedsUseCase: GetBreedsSearchUseCase
-) : ViewModel() {
+): ViewModel() {
 
-    val breeds: Flow<PagingData<Breed>> = getBreedsUseCase.invoke()
-        .cachedIn(viewModelScope)
-
-    val breedForDetail = mutableStateOf<Breed?>(null)
 
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -88,17 +73,6 @@ class HomeViewModel @Inject constructor(
 
     fun clearSearchError() {
         _searchError.value = null
-    }
-
-
-    fun toggleFavorite(breedId: String, isFavorite: Boolean) {
-        viewModelScope.launch {
-            getFavoriteBreedsUseCase.invoke(breedId, isFavorite)
-        }
-    }
-
-    fun setSelectedBreed(breed: Breed) {
-        breedForDetail.value = breed
     }
 
 

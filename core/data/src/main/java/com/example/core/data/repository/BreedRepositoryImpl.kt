@@ -9,11 +9,16 @@ import androidx.paging.PagingData
 import androidx.paging.map
 import com.example.core.data.BreedRemoteMediator
 import com.example.linker.core.database.dao.BreedsDao
+import com.example.linker.core.database.model.BreedEntity
 import com.example.linker.core.database.model.FavoriteEntity
+import com.example.linker.core.database.model.ImageEntity
+import com.example.linker.core.database.model.asExternalModel
 import com.example.linker.core.model.Resource
 import com.linker.core.network.LinkerNetworkDataSource
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class BreedRepositoryImpl @Inject constructor(
@@ -57,6 +62,72 @@ class BreedRepositoryImpl @Inject constructor(
             breedDao.removeFavorite(FavoriteEntity(breedId))
         }
     }
+
+    override suspend fun getBreedSearchResults(query: String): Flow<List<Breed>> = withContext(
+        Dispatchers.IO){
+        if (query.isBlank()) {
+            breedDao.getBreedSearchResults("")
+        }
+
+        try {
+
+            val response = apiService.searchBread(query)
+
+            if (response.isSuccessful) {
+                val breeds = response.body()?.map { breedResponse ->
+                    BreedEntity(
+                        id = breedResponse.id,
+                        name = breedResponse.name,
+                        description = breedResponse.description,
+                        origin = breedResponse.origin,
+                        lifeSpan = breedResponse.life_span,
+                        referenceImageId = breedResponse.reference_image_id
+                    )
+                } ?: emptyList()
+
+                // ذخیره breeds
+                if (breeds.isNotEmpty()) {
+                    breedDao.insertBreeds(breeds)
+                }
+
+                // ذخیره تصاویر مرجع
+                breeds.forEach { breed ->
+                    breed.referenceImageId?.let { imageId ->
+                        if (breedDao.getImageById(imageId) == null) {
+                            try {
+                                val imageResponse = apiService.getImage(imageId)
+                                imageResponse.body()?.let { img ->
+                                    breedDao.insertImage(
+                                        ImageEntity(
+                                            id = imageId,
+                                            breedId = breed.id,
+                                            url = img.url,
+                                            width = img.width,
+                                            height = img.height
+                                        )
+                                    )
+                                }
+                            } catch (e: Exception) {
+                                Log.e("SearchBreedsUseCase", "Error fetching image $imageId: ${e.message}", e)
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("SearchBreedsUseCase", "Error searching breeds: ${e.message}", e)
+            // در حالت آفلاین، فقط از کش استفاده می‌شه
+        }
+
+        breedDao.getBreedSearchResults(query).map { breeds ->
+            breeds.map { it.asExternalModel() }
+        }
+
+    }
+
+
+
+
 
 
 }

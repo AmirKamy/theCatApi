@@ -54,5 +54,19 @@ interface BreedsDao {
     suspend fun getImageById(imageId: String): ImageEntity?
 
 
+    @Query("""
+        SELECT b.id, b.name, b.description, b.origin, b.lifeSpan AS lifeSpan, 
+               b.referenceImageId AS referenceImageId,
+               CASE WHEN f.breedId IS NOT NULL THEN 1 ELSE 0 END AS isFavorite,
+               i.url AS imageUrl, i.width AS imageWidth, i.height AS imageHeight
+        FROM breeds b
+        LEFT JOIN images i ON b.referenceImageId = i.id
+        LEFT JOIN favorites f ON b.id = f.breedId
+        WHERE b.name LIKE '%' || :query || '%'
+    """)
+    fun getBreedSearchResults(query: String): Flow<List<BreedWithFavorite>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBreeds(breeds: List<BreedEntity>)
 
 }

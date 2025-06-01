@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
@@ -25,10 +26,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -58,6 +63,10 @@ fun HomeScreen(
 ) {
 //    val lazyPagingItems = viewModel.breeds.collectAsLazyPagingItems()
     val lazyPagingItems = remember { viewModel.breeds }.collectAsLazyPagingItems()
+    val searchQuery by viewModel.searchQuery.collectAsState()
+    val searchResults by viewModel.searchResults.collectAsState(initial = emptyList())
+    val searchError by viewModel.searchError.collectAsState()
+
     val listState = rememberLazyListState()
 
     Log.i("HomeScreen", "Item count: ${lazyPagingItems.itemCount}")
@@ -90,105 +99,138 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.padding(paddingValues),
-            contentPadding = PaddingValues(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(horizontal = 8.dp)
         ) {
-            if (lazyPagingItems.loadState.refresh is LoadState.Loading) {
-                item {
-                    CircularProgressIndicator(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp)
-                    )
-                }
-            } else if (lazyPagingItems.loadState.refresh is LoadState.Error) {
-                item {
-                    Text(
-                        text = "Failed to load breeds: ${(lazyPagingItems.loadState.refresh as LoadState.Error).error.message}",
-                        color = Color.Red,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        textAlign = TextAlign.Center
-                    )
-                }
-            } else if (lazyPagingItems.itemCount == 0) {
-                item {
-                    Text(
-                        text = "No breeds available",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                }
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { viewModel.setSearchQuery(it) },
+                label = { Text("Search Breeds") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+            )
+
+            // نمایش ارور سرچ
+            searchError?.let { error ->
+                Text(
+                    text = error,
+                    color = Color.Red,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                        .clickable { viewModel.clearSearchError() } // پاک کردن ارور با کلیک
+                )
             }
 
-//            items(
-//                count = lazyPagingItems.itemCount,
-//                key = { index ->
-//                    lazyPagingItems.itemSnapshotList.items.getOrNull(index)?.id ?: index
-//                }
-//            ) { index ->
-//                lazyPagingItems[index]?.let { breed ->
-//                    Log.i("HomeScreen", "Rendering breed: ${breed.name}")
-//                    BreedRow(
-//                        breed = breed,
-//                        onFavoriteToggle = { viewModel.toggleFavorite(breed.id, !breed.isFavorite) },
-//                        onBreedClick = {
-//                            onBreedClick(breed.id)
-//                        }
-//                    )
-//                }
-//            }
+            LazyColumn(
+                contentPadding = PaddingValues(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                if (searchQuery.isNotBlank()) {
 
-            items(
-                count = lazyPagingItems.itemCount,
-                key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
-            ) { index ->
-                lazyPagingItems[index]?.let { breed ->
-                    Log.i("HomeScreen", "Rendering breed: ${breed.name}")
-                    BreedRow(
-                        breed = breed,
-                        onFavoriteToggle = { viewModel.toggleFavorite(breed.id, !breed.isFavorite) },
-                        onBreedClick = {
-                            viewModel.setSelectedBreed(breed)
-                            onBreedClick(breed.id)
+                    if (searchResults.isEmpty() && searchError == null && lazyPagingItems.loadState.refresh is LoadState.NotLoading) {
+                        item {
+                            Text(
+                                text = "No results found",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp)
+                            )
                         }
-                    )
-                }
-            }
+                    } else {
+                        items(
+                            count = searchResults.size,
+                            key = { index -> searchResults[index].id }
+                        ) { index ->
+                            val breed = searchResults[index]
+                            BreedRow(
+                                breed = breed,
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(
+                                        breed.id,
+                                        !breed.isFavorite
+                                    )
+                                },
+                                onBreedClick = {
+                                    viewModel.setSelectedBreed(breed)
+                                    onBreedClick(breed.id)
+                                }
+                            )
+                        }
+                    }
+                } else {
+                    items(
+                        count = lazyPagingItems.itemCount,
+                        key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
+                    ) { index ->
+                        lazyPagingItems[index]?.let { breed ->
+                            Log.i("HomeScreen", "Rendering breed: ${breed.name}")
+                            BreedRow(
+                                breed = breed,
+                                onFavoriteToggle = {
+                                    viewModel.toggleFavorite(
+                                        breed.id,
+                                        !breed.isFavorite
+                                    )
+                                },
+                                onBreedClick = {
+                                    viewModel.setSelectedBreed(breed)
+                                    onBreedClick(breed.id)
+                                }
+                            )
+                        }
+                    }
+                    lazyPagingItems.loadState.apply {
+                        when {
+                            refresh is LoadState.Loading -> {
+                                item {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
+                            }
 
-            when (lazyPagingItems.loadState.append) {
-                is LoadState.Loading -> {
-                    Log.i("HomeScreen", "Loading next page")
-                    item {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp)
-                        )
+                            refresh is LoadState.Error -> {
+                                item {
+                                    Text(
+                                        text = "Failed to load breeds: ${(refresh as LoadState.Error).error.message}",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
+                            }
+
+                            append is LoadState.Loading -> {
+                                item {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
+                            }
+
+                            append is LoadState.Error -> {
+                                item {
+                                    Text(
+                                        text = "Failed to load more breeds: ${(append as LoadState.Error).error.message}",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
-                }
-                is LoadState.Error -> {
-                    Log.e("HomeScreen", "Error loading next page: ${(lazyPagingItems.loadState.append as LoadState.Error).error.message}")
-                    item {
-                        Text(
-                            text = "Error loading breeds",
-                            color = Color.Red,
-                            modifier = Modifier.padding(8.dp)
-                        )
-                    }
-                }
-                else -> {
-                    Log.i("HomeScreen", "No append action")
                 }
             }
         }
     }
 }
-

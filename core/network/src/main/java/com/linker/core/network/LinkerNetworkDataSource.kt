@@ -22,4 +22,6 @@ interface LinkerNetworkDataSource {
 
     suspend fun getBreedDetail(breedId: String): BreedDto
 
+    suspend fun searchBread(query: String): Response<List<Breed>>
+
 }
