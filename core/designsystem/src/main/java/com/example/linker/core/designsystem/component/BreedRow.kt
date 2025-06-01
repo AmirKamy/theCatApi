@@ -55,7 +55,7 @@ fun BreedRow(breed: Breed, onFavoriteToggle: () -> Unit, onBreedClick: () -> Uni
                 imageUrl = breed.imageUrl.toString(),
                 contentDescription = "Product Image",
                 modifier = Modifier
-                    .size(70.dp)
+                    .size(62.dp)
                     .clip(CircleShape)
                     .background(Color.White),
                 contentScale = ContentScale.Crop

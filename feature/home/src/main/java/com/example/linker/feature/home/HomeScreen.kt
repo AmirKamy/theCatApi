@@ -29,11 +29,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +54,7 @@ import androidx.paging.compose.itemKey
 import com.example.linker.core.designsystem.component.BreedRow
 import com.example.linker.core.designsystem.component.DynamicAsyncImage
 import com.example.linker.core.designsystem.component.LinkerTopAppBar
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("CoroutineCreationDuringComposition")
@@ -67,7 +70,7 @@ fun HomeScreen(
     val searchResults by viewModel.searchResults.collectAsState(initial = emptyList())
     val searchError by viewModel.searchError.collectAsState()
 
-    val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
 
     Log.i("HomeScreen", "Item count: ${lazyPagingItems.itemCount}")
 
@@ -80,27 +83,13 @@ fun HomeScreen(
                 navigationIcon = null,
                 navigationIconContentDescription = "Back",
                 action = {
-//                    Row(
-//                        modifier = Modifier.padding(end = 12.dp),
-//                        verticalAlignment = Alignment.CenterVertically
-//                    ) {
-//                        Text(
-//                            modifier = Modifier.padding(top = 5.dp),
-//                            text = "hi",
-//                            style = MaterialTheme.typography.labelLarge
-//                        )
-//                        Spacer(modifier = Modifier.width(4.dp))
-//                        Icon(
-//                            painter = painterResource(id = R.drawable.cart),
-//                            contentDescription = "Cart",
-//                            modifier = Modifier.size(24.dp)
-//                        )
-//                    }
+
                 },
                 onNavigationClick = { navController.popBackStack() }
             )
         }
     ) { paddingValues ->
+
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -112,7 +101,7 @@ fun HomeScreen(
                 label = { Text("Search Breeds") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 16.dp),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
@@ -127,106 +116,119 @@ fun HomeScreen(
                 )
             }
 
-
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+            PullToRefreshBox(
+                isRefreshing = lazyPagingItems.loadState.refresh is LoadState.Loading,
+                onRefresh = {
+                    coroutineScope.launch {
+                        lazyPagingItems.refresh()
+                        if (searchQuery.isNotBlank()) {
+                            viewModel.setSearchQuery(searchQuery)
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
             ) {
-                if (searchQuery.isNotBlank()) {
 
-                    if (searchResults.isEmpty() && searchError == null && lazyPagingItems.loadState.refresh is LoadState.NotLoading) {
-                        item {
-                            Text(
-                                text = "No results found",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            )
+                LazyColumn(
+                    contentPadding = PaddingValues(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (searchQuery.isNotBlank()) {
+
+                        if (searchResults.isEmpty() && searchError == null && lazyPagingItems.loadState.refresh is LoadState.NotLoading) {
+                            item {
+                                Text(
+                                    text = "No results found",
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp)
+                                )
+                            }
+                        } else {
+                            items(
+                                count = searchResults.size,
+                                key = { index -> searchResults[index].id }
+                            ) { index ->
+                                val breed = searchResults[index]
+                                BreedRow(
+                                    breed = breed,
+                                    onFavoriteToggle = {
+                                        viewModel.toggleFavorite(
+                                            breed.id,
+                                            !breed.isFavorite
+                                        )
+                                    },
+                                    onBreedClick = {
+                                        viewModel.setSelectedBreed(breed)
+                                        onBreedClick(breed.id)
+                                    }
+                                )
+                            }
                         }
                     } else {
                         items(
-                            count = searchResults.size,
-                            key = { index -> searchResults[index].id }
+                            count = lazyPagingItems.itemCount,
+                            key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
                         ) { index ->
-                            val breed = searchResults[index]
-                            BreedRow(
-                                breed = breed,
-                                onFavoriteToggle = {
-                                    viewModel.toggleFavorite(
-                                        breed.id,
-                                        !breed.isFavorite
-                                    )
-                                },
-                                onBreedClick = {
-                                    viewModel.setSelectedBreed(breed)
-                                    onBreedClick(breed.id)
-                                }
-                            )
+                            lazyPagingItems[index]?.let { breed ->
+                                Log.i("HomeScreen", "Rendering breed: ${breed.name}")
+                                BreedRow(
+                                    breed = breed,
+                                    onFavoriteToggle = {
+                                        viewModel.toggleFavorite(
+                                            breed.id,
+                                            !breed.isFavorite
+                                        )
+                                    },
+                                    onBreedClick = {
+                                        viewModel.setSelectedBreed(breed)
+                                        onBreedClick(breed.id)
+                                    }
+                                )
+                            }
                         }
-                    }
-                } else {
-                    items(
-                        count = lazyPagingItems.itemCount,
-                        key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
-                    ) { index ->
-                        lazyPagingItems[index]?.let { breed ->
-                            Log.i("HomeScreen", "Rendering breed: ${breed.name}")
-                            BreedRow(
-                                breed = breed,
-                                onFavoriteToggle = {
-                                    viewModel.toggleFavorite(
-                                        breed.id,
-                                        !breed.isFavorite
-                                    )
-                                },
-                                onBreedClick = {
-                                    viewModel.setSelectedBreed(breed)
-                                    onBreedClick(breed.id)
+                        lazyPagingItems.loadState.apply {
+                            when {
+                                refresh is LoadState.Loading -> {
+                                    item {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
-                            )
-                        }
-                    }
-                    lazyPagingItems.loadState.apply {
-                        when {
-                            refresh is LoadState.Loading -> {
-                                item {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    )
-                                }
-                            }
 
-                            refresh is LoadState.Error -> {
-                                item {
-                                    Text(
-                                        text = "Failed to load breeds: ${(refresh as LoadState.Error).error.message}",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    )
+                                refresh is LoadState.Error -> {
+                                    item {
+                                        Text(
+                                            text = "Failed to load breeds: ${(refresh as LoadState.Error).error.message}",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
-                            }
 
-                            append is LoadState.Loading -> {
-                                item {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    )
+                                append is LoadState.Loading -> {
+                                    item {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
-                            }
 
-                            append is LoadState.Error -> {
-                                item {
-                                    Text(
-                                        text = "Failed to load more breeds: ${(append as LoadState.Error).error.message}",
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(16.dp)
-                                    )
+                                append is LoadState.Error -> {
+                                    item {
+                                        Text(
+                                            text = "Failed to load more breeds: ${(append as LoadState.Error).error.message}",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp)
+                                        )
+                                    }
                                 }
                             }
                         }

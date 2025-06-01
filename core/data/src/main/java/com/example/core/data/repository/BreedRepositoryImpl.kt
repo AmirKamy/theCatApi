@@ -48,6 +48,7 @@ class BreedRepositoryImpl @Inject constructor(
                     isFavorite = entity.isFavorite,
                     imageUrl = entity.imageUrl,
                     imageWidth = entity.imageWidth,
+                    temperament = entity.breed.temperament.toString(),
                     imageHeight = entity.imageHeight
                 )
             }

@@ -86,9 +86,9 @@ fun ShowBreedDetailCardView(breed: Breed) {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
+                DetailRow(label = "Temperament", value = breed.temperament ?: "Unknown")
                 DetailRow(label = "Origin", value = breed.origin ?: "Unknown")
                 DetailRow(label = "Life Span", value = breed.life_span ?: "Unknown")
-                DetailRow(label = "Temperament", value = breed.temperament ?: "Unknown")
             }
         }
     }
