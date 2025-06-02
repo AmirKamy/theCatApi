@@ -11,6 +11,8 @@ import com.example.linker.core.database.model.DetailImageEntity
 import com.linker.core.network.LinkerNetworkDataSource
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import java.io.IOException
 
 @OptIn(ExperimentalPagingApi::class)
 class ImageRemoteMediator(
@@ -35,16 +37,29 @@ class ImageRemoteMediator(
                 return MediatorResult.Success(endOfPaginationReached = true)
             }
             LoadType.APPEND -> {
-                val currentPage = nextPage ?: return MediatorResult.Success(endOfPaginationReached = true)
+                val currentPage = nextPage ?: run {
+                    Log.i("ImageRemoteMediator", "No next page, stopping append")
+                    return MediatorResult.Success(endOfPaginationReached = true)
+                }
                 Log.i("ImageRemoteMediator", "Appending, requesting page: $currentPage")
                 currentPage
             }
         }
 
         return try {
-            Log.i("ImageRemoteMediator", "Fetching images for breedId: $breedId, page: $page, limit: 10")
+            Log.i("ImageRemoteMediator", "Fetching images for breedId: $breedId, page: $page, limit: 5")
             val response = apiService.getBreedDetailImages(breedId = breedId, limit = 5, page = page)
-            Log.i("ImageRemoteMediator", "Response code: ${response.code()}, ${response.body().toString()}")
+            if (!response.isSuccessful) {
+                val imageCount = withContext(Dispatchers.IO) {
+                    breedDetailImageDao.getDetailImageCount(breedId)
+                }
+                Log.i("ImageRemoteMediator", "Response failed with code: ${response.code()}, images in cache: $imageCount")
+                return if (imageCount > 0) {
+                    MediatorResult.Success(endOfPaginationReached = false)
+                } else {
+                    MediatorResult.Error(HttpException(response))
+                }
+            }
 
             val images = response.body()?.map {
                 DetailImageEntity(
@@ -67,26 +82,48 @@ class ImageRemoteMediator(
             }
 
             val endOfPaginationReached = images.isEmpty() || images.size < 5
-            if (endOfPaginationReached) {
-                nextPage = null
+            nextPage = if (endOfPaginationReached) {
                 Log.i("ImageRemoteMediator", "End of pagination reached: no more data")
+                null
             } else {
-                nextPage = page + 1
-                Log.i("ImageRemoteMediator", "Next page set to: $nextPage")
+                page + 1
             }
+            Log.i("ImageRemoteMediator", "Next page set to: $nextPage")
 
-            Log.i("ImageRemoteMediator", "End of pagination reached: $endOfPaginationReached")
             MediatorResult.Success(endOfPaginationReached = endOfPaginationReached)
-        } catch (e: Exception) {
-            Log.e("ImageRemoteMediator", "Error fetching images for breedId: $breedId, page: $page: ${e.message}", e)
+        } catch (e: IOException) {
             val imageCount = withContext(Dispatchers.IO) {
                 breedDetailImageDao.getDetailImageCount(breedId)
             }
             Log.i("ImageRemoteMediator", "Offline mode, images in database: $imageCount")
             if (imageCount > 0) {
-                return MediatorResult.Success(endOfPaginationReached = false)
+                MediatorResult.Success(endOfPaginationReached = false)
+            } else {
+                Log.e("ImageRemoteMediator", "Network error fetching images for breedId: $breedId, page: $page: ${e.message}", e)
+                MediatorResult.Error(e)
             }
-            MediatorResult.Error(e)
+        } catch (e: HttpException) {
+            val imageCount = withContext(Dispatchers.IO) {
+                breedDetailImageDao.getDetailImageCount(breedId)
+            }
+            Log.i("ImageRemoteMediator", "Server error, images in database: $imageCount")
+            if (imageCount > 0) {
+                MediatorResult.Success(endOfPaginationReached = false)
+            } else {
+                Log.e("ImageRemoteMediator", "Server error fetching images for breedId: $breedId, page: $page: ${e.message}", e)
+                MediatorResult.Error(e)
+            }
+        } catch (e: Exception) {
+            val imageCount = withContext(Dispatchers.IO) {
+                breedDetailImageDao.getDetailImageCount(breedId)
+            }
+            Log.i("ImageRemoteMediator", "Unexpected error, images in database: $imageCount")
+            if (imageCount > 0) {
+                MediatorResult.Success(endOfPaginationReached = false)
+            } else {
+                Log.e("ImageRemoteMediator", "Unexpected error fetching images for breedId: $breedId, page: $page: ${e.message}", e)
+                MediatorResult.Error(e)
+            }
         }
     }
 }

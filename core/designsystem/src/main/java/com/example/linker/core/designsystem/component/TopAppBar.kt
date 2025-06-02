@@ -36,7 +36,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.linker.core.designsystem.icon.AppIcons
-import com.example.linker.core.designsystem.theme.LinkerTheme
+import com.example.linker.core.designsystem.theme.AppTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -71,7 +71,7 @@ fun LinkerTopAppBar(
 @Preview("Top App Bar")
 @Composable
 private fun NiaTopAppBarPreview() {
-    LinkerTheme {
+    AppTheme {
         LinkerTopAppBar(
             titleRes = R.string.untitled,
             navigationIcon = AppIcons.ArrowBack,

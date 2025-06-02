@@ -1,31 +1,15 @@
 package com.example.linker.feature.home
 
-import Breed
-import android.annotation.SuppressLint
-import android.util.Log
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.FavoriteBorder
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,14 +18,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -49,32 +28,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemContentType
-import androidx.paging.compose.itemKey
+import com.example.linker.core.designsystem.component.AppLoadingWheel
 import com.example.linker.core.designsystem.component.BreedRow
-import com.example.linker.core.designsystem.component.DynamicAsyncImage
 import com.example.linker.core.designsystem.component.LinkerTopAppBar
-import kotlinx.coroutines.launch
+import com.example.linker.core.model.Resource
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel(),
     navController: NavController,
     onBreedClick: (String) -> Unit
 ) {
-//    val lazyPagingItems = viewModel.breeds.collectAsLazyPagingItems()
-    val lazyPagingItems = remember { viewModel.breeds }.collectAsLazyPagingItems()
+    val lazyPagingItems = viewModel.breeds.collectAsLazyPagingItems()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val searchResults by viewModel.searchResults.collectAsState(initial = emptyList())
-    val searchError by viewModel.searchError.collectAsState()
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Log.i("HomeScreen", "Item count: ${lazyPagingItems.itemCount}")
-
-
+    val searchResults by viewModel.searchResults.collectAsState()
+    val lazyListState = rememberLazyListState()
 
     Scaffold(
         topBar = {
@@ -82,14 +51,11 @@ fun HomeScreen(
                 titleRes = R.string.breeds,
                 navigationIcon = null,
                 navigationIconContentDescription = "Back",
-                action = {
-
-                },
+                action = {},
                 onNavigationClick = { navController.popBackStack() }
             )
         }
     ) { paddingValues ->
-
         Column(
             modifier = Modifier
                 .padding(paddingValues)
@@ -105,65 +71,83 @@ fun HomeScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
             )
 
-            searchError?.let { error ->
-                Text(
-                    text = error,
-                    color = Color.Red,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp)
-                        .clickable { viewModel.clearSearchError() } // پاک کردن ارور با کلیک
-                )
+            when (val searchResult = searchResults) {
+                is Resource.Error -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = searchResult.message,
+                            color = Color.Red,
+                            textAlign = TextAlign.Center
+                        )
+                        Button(
+                            onClick = { viewModel.retrySearch() },
+                            modifier = Modifier.padding(top = 8.dp)
+                        ) {
+                            Text("Retry")
+                        }
+                    }
+                }
+                else -> {}
             }
 
             PullToRefreshBox(
                 isRefreshing = lazyPagingItems.loadState.refresh is LoadState.Loading,
-                onRefresh = {
-                    coroutineScope.launch {
-                        lazyPagingItems.refresh()
-                        if (searchQuery.isNotBlank()) {
-                            viewModel.setSearchQuery(searchQuery)
-                        }
-                    }
-                },
+                onRefresh = { lazyPagingItems.refresh() },
                 modifier = Modifier.fillMaxWidth()
             ) {
-
                 LazyColumn(
                     contentPadding = PaddingValues(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
+                    state = lazyListState
                 ) {
                     if (searchQuery.isNotBlank()) {
-
-                        if (searchResults.isEmpty() && searchError == null && lazyPagingItems.loadState.refresh is LoadState.NotLoading) {
-                            item {
-                                Text(
-                                    text = "No results found",
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp)
-                                )
-                            }
-                        } else {
-                            items(
-                                count = searchResults.size,
-                                key = { index -> searchResults[index].id }
-                            ) { index ->
-                                val breed = searchResults[index]
-                                BreedRow(
-                                    breed = breed,
-                                    onFavoriteToggle = {
-                                        viewModel.toggleFavorite(
-                                            breed.id,
-                                            !breed.isFavorite
+                        when (val searchResult = searchResults) {
+                            is Resource.Success -> {
+                                if (searchResult.data.isEmpty()) {
+                                    item {
+                                        Text(
+                                            text = "No results found. Try a different query.",
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            textAlign = TextAlign.Center
                                         )
-                                    },
-                                    onBreedClick = {
-                                        viewModel.setSelectedBreed(breed)
-                                        onBreedClick(breed.id)
                                     }
-                                )
+                                } else {
+                                    items(
+                                        count = searchResult.data.size,
+                                        key = { index -> searchResult.data[index].id }
+                                    ) { index ->
+                                        val breed = searchResult.data[index]
+                                        BreedRow(
+                                            breed = breed,
+                                            onFavoriteToggle = {
+                                                viewModel.toggleFavorite(breed.id, !breed.isFavorite)
+                                            },
+                                            onBreedClick = {
+                                                viewModel.setSelectedBreed(breed)
+                                                onBreedClick(breed.id)
+                                            }
+                                        )
+                                    }
+                                }
                             }
+                            is Resource.Loading -> {
+                                item {
+                                    AppLoadingWheel(
+                                        contentDesc = "Search Query Loading",
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(16.dp)
+                                    )
+                                }
+                            }
+                            else -> {}
                         }
                     } else {
                         items(
@@ -171,14 +155,10 @@ fun HomeScreen(
                             key = { index -> lazyPagingItems[index]?.id ?: "breed-$index" }
                         ) { index ->
                             lazyPagingItems[index]?.let { breed ->
-                                Log.i("HomeScreen", "Rendering breed: ${breed.name}")
                                 BreedRow(
                                     breed = breed,
                                     onFavoriteToggle = {
-                                        viewModel.toggleFavorite(
-                                            breed.id,
-                                            !breed.isFavorite
-                                        )
+                                        viewModel.toggleFavorite(breed.id, !breed.isFavorite)
                                     },
                                     onBreedClick = {
                                         viewModel.setSelectedBreed(breed)
@@ -191,43 +171,64 @@ fun HomeScreen(
                             when {
                                 refresh is LoadState.Loading -> {
                                     item {
-                                        CircularProgressIndicator(
+                                        AppLoadingWheel(
+                                            contentDesc = "Breed Loading",
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(16.dp)
                                         )
                                     }
                                 }
-
                                 refresh is LoadState.Error -> {
                                     item {
-                                        Text(
-                                            text = "Failed to load breeds: ${(refresh as LoadState.Error).error.message}",
+                                        Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(16.dp)
-                                        )
+                                                .padding(16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "Failed to load breeds. Please try again.",
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Button(
+                                                onClick = { lazyPagingItems.refresh() },
+                                                modifier = Modifier.padding(top = 8.dp)
+                                            ) {
+                                                Text("Retry")
+                                            }
+                                        }
                                     }
                                 }
-
                                 append is LoadState.Loading -> {
                                     item {
-                                        CircularProgressIndicator(
+                                        AppLoadingWheel(
+                                            contentDesc = "Breed Loading",
                                             modifier = Modifier
                                                 .fillMaxWidth()
                                                 .padding(16.dp)
                                         )
                                     }
                                 }
-
                                 append is LoadState.Error -> {
                                     item {
-                                        Text(
-                                            text = "Failed to load more breeds: ${(append as LoadState.Error).error.message}",
+                                        Column(
                                             modifier = Modifier
                                                 .fillMaxWidth()
-                                                .padding(16.dp)
-                                        )
+                                                .padding(16.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "Failed to load more breeds. Please try again.",
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Button(
+                                                onClick = { lazyPagingItems.retry() },
+                                                modifier = Modifier.padding(top = 8.dp)
+                                            ) {
+                                                Text("Retry")
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -235,6 +236,12 @@ fun HomeScreen(
                     }
                 }
             }
+        }
+    }
+
+    LaunchedEffect(searchQuery) {
+        if (searchQuery.isNotBlank()) {
+            viewModel.setSearchQuery(searchQuery)
         }
     }
 }

@@ -48,11 +48,11 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.linker.core.designsystem.theme.LinkerTheme
+import com.example.linker.core.designsystem.theme.AppTheme
 import kotlinx.coroutines.launch
 
 @Composable
-fun NiaLoadingWheel(
+fun AppLoadingWheel(
     contentDesc: String,
     modifier: Modifier = Modifier,
 ) {
@@ -133,7 +133,7 @@ fun NiaLoadingWheel(
 }
 
 @Composable
-fun NiaOverlayLoadingWheel(
+fun AppOverlayLoadingWheel(
     contentDesc: String,
     modifier: Modifier = Modifier,
 ) {
@@ -144,7 +144,7 @@ fun NiaOverlayLoadingWheel(
         modifier = modifier
             .size(60.dp),
     ) {
-        NiaLoadingWheel(
+        AppLoadingWheel(
             contentDesc = contentDesc,
         )
     }
@@ -152,20 +152,20 @@ fun NiaOverlayLoadingWheel(
 
 @Preview
 @Composable
-fun NiaLoadingWheelPreview() {
-    LinkerTheme {
+fun AppLoadingWheelPreview() {
+    AppTheme {
         Surface {
-            NiaLoadingWheel(contentDesc = "LoadingWheel")
+            AppLoadingWheel(contentDesc = "LoadingWheel")
         }
     }
 }
 
 @Preview
 @Composable
-fun NiaOverlayLoadingWheelPreview() {
-    LinkerTheme {
+fun AppOverlayLoadingWheelPreview() {
+    AppTheme {
         Surface {
-            NiaOverlayLoadingWheel(contentDesc = "LoadingWheel")
+            AppOverlayLoadingWheel(contentDesc = "LoadingWheel")
         }
     }
 }

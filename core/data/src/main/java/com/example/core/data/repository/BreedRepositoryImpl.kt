@@ -19,12 +19,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import java.io.IOException
 import javax.inject.Inject
 
 class BreedRepositoryImpl @Inject constructor(
     private val apiService: LinkerNetworkDataSource,
     private val breedDao: BreedsDao
 ) : BreedRepository {
+
     @OptIn(ExperimentalPagingApi::class)
     override fun getBreeds(): Flow<PagingData<Breed>> {
         return Pager(
@@ -36,7 +39,6 @@ class BreedRepositoryImpl @Inject constructor(
             remoteMediator = BreedRemoteMediator(apiService, breedDao),
             pagingSourceFactory = { breedDao.getBreeds() }
         ).flow.map { pagingData ->
-            Log.i("BreedRepository", "Mapping PagingData with $pagingData")
             pagingData.map { entity ->
                 Breed(
                     id = entity.breed.id,
@@ -56,24 +58,28 @@ class BreedRepositoryImpl @Inject constructor(
     }
 
     override suspend fun toggleFavorite(breedId: String, isFavorite: Boolean) {
-        Log.i("BreedRepository", "Toggling favorite for breedId: $breedId, isFavorite: $isFavorite")
-        if (isFavorite) {
-            breedDao.addFavorite(FavoriteEntity(breedId))
-        } else {
-            breedDao.removeFavorite(FavoriteEntity(breedId))
+        withContext(Dispatchers.IO) {
+            try {
+                if (isFavorite) {
+                    breedDao.addFavorite(FavoriteEntity(breedId))
+                } else {
+                    breedDao.removeFavorite(FavoriteEntity(breedId))
+                }
+            } catch (e: Exception) {
+                Log.e("BreedRepository", "Error toggling favorite for breedId: $breedId, ${e.message}", e)
+                throw e
+            }
         }
     }
 
-    override suspend fun getBreedSearchResults(query: String): Flow<List<Breed>> = withContext(
-        Dispatchers.IO){
-        if (query.isBlank()) {
-            breedDao.getBreedSearchResults("")
-        }
-
+    override suspend fun getBreedSearchResults(query: String): Flow<Resource<List<Breed>>> = withContext(Dispatchers.IO) {
         try {
+            if (query.isBlank()) {
+                return@withContext breedDao.getBreedSearchResults("")
+                    .map { breeds -> Resource.Success(breeds.map { it.asExternalModel() }) }
+            }
 
             val response = apiService.searchBread(query)
-
             if (response.isSuccessful) {
                 val breeds = response.body()?.map { breedResponse ->
                     BreedEntity(
@@ -87,12 +93,10 @@ class BreedRepositoryImpl @Inject constructor(
                     )
                 } ?: emptyList()
 
-                // ذخیره breeds
                 if (breeds.isNotEmpty()) {
                     breedDao.insertBreeds(breeds)
                 }
 
-                // ذخیره تصاویر مرجع
                 breeds.forEach { breed ->
                     breed.referenceImageId?.let { imageId ->
                         if (breedDao.getImageById(imageId) == null) {
@@ -115,21 +119,46 @@ class BreedRepositoryImpl @Inject constructor(
                         }
                     }
                 }
+
+                breedDao.getBreedSearchResults(query)
+                    .map { breeds -> Resource.Success(breeds.map { it.asExternalModel() }) }
+            } else {
+                breedDao.getBreedSearchResults(query)
+                    .map { breeds ->
+                        if (breeds.isNotEmpty()) {
+                            Resource.Success(breeds.map { it.asExternalModel() })
+                        } else {
+                            Resource.Error("Failed to search breeds: Server error")
+                        }
+                    }
             }
+        } catch (e: IOException) {
+            breedDao.getBreedSearchResults(query)
+                .map { breeds ->
+                    if (breeds.isNotEmpty()) {
+                        Resource.Success(breeds.map { it.asExternalModel() })
+                    } else {
+                        Resource.Error("No internet connection. Please check your network.")
+                    }
+                }
+        } catch (e: HttpException) {
+            breedDao.getBreedSearchResults(query)
+                .map { breeds ->
+                    if (breeds.isNotEmpty()) {
+                        Resource.Success(breeds.map { it.asExternalModel() })
+                    } else {
+                        Resource.Error("Server error: ${e.message()}")
+                    }
+                }
         } catch (e: Exception) {
-            Log.e("SearchBreedsUseCase", "Error searching breeds: ${e.message}", e)
-            // در حالت آفلاین، فقط از کش استفاده می‌شه
+            breedDao.getBreedSearchResults(query)
+                .map { breeds ->
+                    if (breeds.isNotEmpty()) {
+                        Resource.Success(breeds.map { it.asExternalModel() })
+                    } else {
+                        Resource.Error("An unexpected error occurred: ${e.message}")
+                    }
+                }
         }
-
-        breedDao.getBreedSearchResults(query).map { breeds ->
-            breeds.map { it.asExternalModel() }
-        }
-
     }
-
-
-
-
-
-
 }

@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.linker.core.designsystem.icon.AppIcons
-import com.example.linker.core.designsystem.theme.LinkerTheme
+import com.example.linker.core.designsystem.theme.AppTheme
 
 /**
  * Now in Android filled button with generic content slot. Wraps Material 3 [Button].
@@ -252,7 +252,7 @@ private fun NiaButtonContent(
 @Preview
 @Composable
 fun NiaButtonPreview() {
-    LinkerTheme {
+    AppTheme {
 
         NiaButton(onClick = {}, text = { Text("Test button") })
 
@@ -262,7 +262,7 @@ fun NiaButtonPreview() {
 @Preview
 @Composable
 fun NiaOutlinedButtonPreview() {
-    LinkerTheme {
+    AppTheme {
         NiaOutlinedButton(onClick = {}, text = { Text("Test button") })
 
     }
@@ -271,7 +271,7 @@ fun NiaOutlinedButtonPreview() {
 @Preview
 @Composable
 fun NiaButtonLeadingIconPreview() {
-    LinkerTheme {
+    AppTheme {
         NiaButton(
             onClick = {},
             text = { Text("Test button") },
