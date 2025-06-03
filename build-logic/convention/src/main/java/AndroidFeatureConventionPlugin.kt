@@ -10,6 +10,7 @@ class AndroidFeatureConventionPlugin : Plugin<Project> {
             pluginManager.apply {
                 apply("linker.android.library")
                 apply("linker.android.hilt")
+                apply("kotlin-parcelize")
                 apply("org.jetbrains.kotlin.plugin.serialization")
             }
 

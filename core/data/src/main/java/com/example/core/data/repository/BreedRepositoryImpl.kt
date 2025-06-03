@@ -34,7 +34,8 @@ class BreedRepositoryImpl @Inject constructor(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false,
-                initialLoadSize = 10
+                initialLoadSize = 10,
+                prefetchDistance = 1
             ),
             remoteMediator = BreedRemoteMediator(apiService, breedDao),
             pagingSourceFactory = { breedDao.getBreeds() }
