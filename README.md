@@ -107,26 +107,5 @@ To optimize performance, images for a new page of breeds are loaded concurrently
 - Theme settings, such as colors and typography, are defined in the `Design System` module, allowing for consistent styling across the app.
 - Users can switch between themes seamlessly, with all configurations handled centrally.
 
-## Screenshots
-### Home Screen (Light Mode)
-Displays a paginated list of dog breeds with favorite status and images in light theme.
-![Home Light](screenshots/home_light.jpg)
-
-### Home Screen (Dark Mode)
-Displays a paginated list of dog breeds with favorite status and images in dark theme.
-![Home Dark](screenshots/home_dark.jpg)
-
-### Breed Search
-Allows users to search for breeds with results enriched with favorite status.
-![Breed Search](screenshots/breedsearch.jpg)
-
-### Breed Detail (Loading State)
-Shows the loading state while fetching detailed breed information and images.
-![Breed Detail Loading](screenshots/breed_detail_loading.jpg)
-
-### Breed Detail (Scrolled)
-Displays detailed breed information with a grid of images after scrolling.
-![Breed Detail Scrolled](screenshots/breed_detail_scrolled.jpg)
-
 ## Contact
 For questions, feedback, or support, please reach out to the project maintainers at AmirHossein.kamranpor@gmail.com
